@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use std::time::Duration;
 use std::thread;
+use std::env;
 
 mod display;
 mod input;
@@ -92,16 +93,6 @@ impl Chip8 {
             }
         }
     }
-
-    // pub fn push(&mut self, addr: u16) {
-    //     self.stack[self.sp as usize] = addr;
-    //     self.sp += 1;
-    // }
-
-    // pub fn pop(&mut self) -> u16 {
-    //     self.sp -= 1;
-    //     self.stack[self.sp as usize]
-    // }
 
     pub fn tick(&mut self) {
         let opcode = self.get_opcode();
@@ -423,18 +414,19 @@ impl Chip8 {
 }
 
 fn main() {
-    let mut chippy = Chip8::new();
+    let args: Vec<String> = env::args().collect();
+    let filepath = &args[1];
 
     let sdl_context = match sdl2::init() {
         Ok(sdl_context) => sdl_context,
         Err(err) => panic!("SDL could not initialize!  SDL_Error: {}", err),
     };
 
+    let mut chippy = Chip8::new();
     let mut display = Display::new(&sdl_context);
-
     let mut input = Input::new(&sdl_context);
 
-    chippy.load("PATH TO FILE");
+    chippy.load(&filepath);
 
     while let Ok(keypad) = input.poll() {
         chippy.keypad.copy_from_slice(&keypad);
@@ -446,16 +438,5 @@ fn main() {
 
         // ensure 500Hz clock rate
         thread::sleep(Duration::from_millis(2));
-    }
-
-    for y in 0..SCREEN_HEIGHT {
-        for x in 0..SCREEN_WIDTH {
-            if chippy.screen[y][x] {
-                print!("x");
-            } else {
-                print!(" ");
-            }
-        }
-        println!();
     }
 }
