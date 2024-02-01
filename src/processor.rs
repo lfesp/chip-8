@@ -53,7 +53,7 @@ pub struct ProcessorState {
 }
 
 #[derive(Debug)]
-pub struct SuperChip{}
+pub struct SuperChip;
 trait InstructionSet {
     fn execute(&self, cpu: &mut ProcessorState, opcode: u16);
     /// CLS: clear the display buffer

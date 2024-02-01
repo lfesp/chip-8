@@ -20,7 +20,7 @@ fn main() {
         Err(err) => panic!("SDL context could not initialize!  SDL_Error: {}", err),
     };
 
-    let mut chippy = Processor::new(SuperChip{});
+    let mut chippy = Processor::new(SuperChip);
     let mut display = Display::new(&sdl_context);
     let mut input = Input::new(&sdl_context);
 
