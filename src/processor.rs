@@ -33,7 +33,7 @@ const FONT_DATA: [u8; FONTSET_SIZE] = [
 
 #[derive(Debug)]
 pub struct Processor<T: InstructionSet> {
-    pub state: ProcessorState,
+    state: ProcessorState,
     isa: T,
 }
 
@@ -47,14 +47,14 @@ pub struct ProcessorState {
     sp: u16,
     delay_timer: u8,
     sound_timer: u8,
-    pub keypad: [bool; 16],
-    pub screen: [[bool; SCREEN_WIDTH]; SCREEN_HEIGHT],
+    keypad: [bool; 16],
+    screen: [[bool; SCREEN_WIDTH]; SCREEN_HEIGHT],
     display_stale: bool,
 }
 
 #[derive(Debug)]
 pub struct SuperChip;
-trait InstructionSet {
+pub trait InstructionSet {
     fn execute(&self, cpu: &mut ProcessorState, opcode: u16);
     /// CLS: clear the display buffer
     fn op_00e0(&self, cpu: &mut ProcessorState);
@@ -197,7 +197,15 @@ impl<T: InstructionSet> Processor<T> {
     pub fn display_stale(&mut self) -> bool {
         let is_stale = self.state.display_stale;
         self.state.display_stale = false;
-        return is_stale;
+        is_stale
+    }
+
+    pub fn set_keypad(&mut self, input: &[bool; 16]) {
+        self.state.keypad.copy_from_slice(input);
+    }
+
+    pub fn get_screen(&self) -> &[[bool; SCREEN_WIDTH]; SCREEN_HEIGHT] {
+        &self.state.screen
     }
 }
 
@@ -336,6 +344,11 @@ impl InstructionSet for SuperChip {
         cpu.v_reg[0x0F] = if v_x > v_y { 1 } else { 0 };
     }
 
+    fn op_8xy6(&self, cpu: &mut ProcessorState, x: usize, _y: usize) {
+        cpu.v_reg[0x0F] = cpu.v_reg[x] & 0x01;
+        cpu.v_reg[x] >>= 1;
+    }
+
     fn op_8xy7(&self, cpu: &mut ProcessorState, x: usize, y: usize) {
         let v_x = cpu.v_reg[x] as u16;
         let v_y = cpu.v_reg[y] as u16;
@@ -345,16 +358,7 @@ impl InstructionSet for SuperChip {
         cpu.v_reg[0x0F] = if v_y > v_x { 1 } else { 0 };
     }
 
-    fn op_8xy6(&self, cpu: &mut ProcessorState, x: usize, _y: usize) {
-        // BELOW ONLY FOR COSMAC VIP INTERPRETER
-        // self.v_reg[x] = self.v_reg[y]
-        cpu.v_reg[0x0F] = cpu.v_reg[x] & 0x01;
-        cpu.v_reg[x] >>= 1;
-    }
-
     fn op_8xye(&self, cpu: &mut ProcessorState, x: usize, _y: usize) {
-        // BELOW ONLY FOR COSMAC VIP INTERPRETER
-        // self.v_reg[x] = self.v_reg[y]
         cpu.v_reg[0x0F] = cpu.v_reg[x] & 0x80;
         cpu.v_reg[x] <<= 1;
     }

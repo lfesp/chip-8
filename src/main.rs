@@ -27,11 +27,11 @@ fn main() {
     chippy.load(&filepath).unwrap();
 
     while let Ok(keypad) = input.poll() {
-        chippy.state.keypad.copy_from_slice(&keypad);
+        chippy.set_keypad(&keypad);
         chippy.tick();
 
         if chippy.display_stale() {
-            display.draw(&chippy.state.screen);
+            display.draw(chippy.get_screen());
         }
 
         // ensure 500Hz clock rate
