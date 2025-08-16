@@ -148,7 +148,7 @@ impl<T: InstructionSet> Processor<T> {
         };
 
         // load fonts into memory
-        chip_8.state.ram[0..(FONTSET_START_ADDRESS as usize)].copy_from_slice(&FONT_DATA);
+        chip_8.state.ram[FONTSET_START_ADDRESS as usize..(FONTSET_START_ADDRESS as usize + FONTSET_SIZE)].copy_from_slice(&FONT_DATA);
 
         chip_8
     }
@@ -345,7 +345,7 @@ impl InstructionSet for SuperChip {
     }
 
     fn op_8xy6(&self, cpu: &mut ProcessorState, x: usize, _y: usize) {
-        cpu.v_reg[0x0F] = cpu.v_reg[x] & 0x01;
+        cpu.v_reg[0x0F] = if cpu.v_reg[x] & 0x01 != 0 { 1 } else { 0 };
         cpu.v_reg[x] >>= 1;
     }
 
@@ -359,7 +359,7 @@ impl InstructionSet for SuperChip {
     }
 
     fn op_8xye(&self, cpu: &mut ProcessorState, x: usize, _y: usize) {
-        cpu.v_reg[0x0F] = cpu.v_reg[x] & 0x80;
+        cpu.v_reg[0x0F] = if cpu.v_reg[x] & 0x80 != 0 { 1 } else { 0 };
         cpu.v_reg[x] <<= 1;
     }
 
@@ -391,7 +391,9 @@ impl InstructionSet for SuperChip {
             for shift in 0..8 {
                 let pixel = sprite & (0x80 >> shift);
                 let x_coord = (cpu.v_reg[x] as usize + shift) % SCREEN_WIDTH;
-                cpu.v_reg[0x0F] |= pixel & cpu.screen[y_coord][x_coord] as u8;
+                if pixel != 0 && cpu.screen[y_coord][x_coord] {
+                    cpu.v_reg[0x0F] = 1;
+                }
                 cpu.screen[y_coord][x_coord] ^= pixel != 0;
             }
         }
